@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: fortran-s2i
+metadata:
+  annotations:
+    description: A basic builder for Golang applications
+    iconClass: icon-go-gopher
+    openshift.io/display-name: Golang S2I Builder Image Builder
+    openshift.io/documentation-url: https://github.com/kevensen/fortran-s2i
+    template.openshift.io/bindable: "false"
+    tags: fortran,s2i
+  creationTimestamp: null
+  name: fortran-s2i
+objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      description: Keeps track of changes in the application image
+    name: fortran-s2i
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      description: Defines how to build the application
+    name: fortran-s2i
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: fortran-s2i:latest
+    source:
+      contextDir: ${CONTEXT_DIR}
+      git:
+        ref: ${SOURCE_REPOSITORY_REF}
+        uri: ${SOURCE_REPOSITORY_URL}
+      type: Git
+    strategy:
+      dockerStrategy: null
+      type: Docker
+    triggers:
+    - type: ConfigChange
+    - github:
+        secret: ${GITHUB_WEBHOOK_SECRET}
+      type: GitHub
+parameters:
+- description: The URL of the repository with your Golang application code
+  name: SOURCE_REPOSITORY_URL
+  displayName: Application Source URL
+  value: https://github.com/kevensen/fortran-s2i
+- description: Set this to a branch name, tag or other ref of your repository if you
+    are not using the default branch
+  name: SOURCE_REPOSITORY_REF
+  displayName: Application Source Branch
+- description: Set this to the relative path to your project if it is not in the root
+    of your repository
+  name: CONTEXT_DIR
+  displayName: Application Source Directory
+- description: A secret string used to configure the GitHub webhook for the app repo
+  from: '[a-zA-Z0-9]{40}'
+  generate: expression
+  name: GITHUB_WEBHOOK_SECRET
+  displayName: Application GitHub Web Hook Secret

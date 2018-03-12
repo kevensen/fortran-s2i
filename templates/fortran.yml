@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: fortran
+metadata:
+  annotations:
+    description: A basic builder for Golang applications
+    iconClass: icon-shadowman
+    tags: fortran
+    openshift.io/display-name: Go
+    openshift.io/documentation-url: https://github.com/kevensen/fortran-s2i
+    template.openshift.io/bindable: "false"
+  name: fortran
+objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      description: Keeps track of changes in the application image
+    name: ${APPLICATION_NAME}
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      description: Defines how to build the application
+    name: ${APPLICATION_NAME}
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${APPLICATION_NAME}:latest
+    source:
+      contextDir: ${APP_CONTEXT_DIR}
+      git:
+        ref: ${APP_SOURCE_REPOSITORY_REF}
+        uri: ${APP_SOURCE_REPOSITORY_URL}
+      type: Git
+    strategy:
+      sourceStrategy:
+        from:
+          kind: ImageStreamTag
+          name: fortran-s2i:latest
+      type: Source
+    triggers:
+    - type: ImageChange
+    - type: ConfigChange
+    - github:
+        secret: ${APP_GITHUB_WEBHOOK_SECRET}
+      type: GitHub
+parameters:
+- description: The URL of the repository with your Golang application code
+  name: APP_SOURCE_REPOSITORY_URL
+  displayName: Application Source URL
+- description: Set this to a branch name, tag or other ref of your repository if you
+    are not using the default branch
+  name: APP_SOURCE_REPOSITORY_REF
+  displayName: Application Source Branch
+- description: Set this to the relative path to your project if it is not in the root
+    of your repository
+  name: APP_CONTEXT_DIR
+  displayName: Application Source Directory
+- description: The name for the application.
+  name: APPLICATION_NAME
+  required: true
+  value: fortran-app
+  displayName: Application Name
